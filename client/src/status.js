@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-class Profile extends Component {
+class Status extends Component {
 
     render() {
         return (
@@ -13,23 +13,23 @@ class Profile extends Component {
                         <tbody>
                             <tr>
                                 <td>Contract Name</td>
-                                <td>{this.props.conname}</td>
+                                <td>{this.props.state.conname}</td>
                             </tr>
                             <tr>
                                 <td>Contract Address</td>
-                                <td>{this.props.conaddress}</td>
+                                <td>{this.props.state.conaddress}</td>
                             </tr>
                             <tr>
                                 <td>Voting started?</td>
-                                <td>{this.props.voteStart}</td>
+                                <td>{this.props.state.voteStart}</td>
                             </tr>
                             <tr>
                                 <td>Voting ended?</td>
-                                <td>{this.props.voteEnd}</td>
+                                <td>{this.props.state.voteEnd}</td>
                             </tr>
                             <tr>
                                 <td>Account</td>
-                                <td>{this.props.account}</td>
+                                <td>{this.props.state.account}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -38,4 +38,4 @@ class Profile extends Component {
         )
     }
 }
-export default Profile
+export default Status

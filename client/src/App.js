@@ -4,7 +4,7 @@ import ElectionContract from "./contracts/Election.json";
 import contract from "truffle-contract";
 import Web3 from 'web3'
 import ListCandidates from "./listcandidates.js";
-import Profile from "./Profile.js"
+import Status from "./status.js"
 import { register } from './ContractFunctions'
 import { login } from './ContractFunctions'
 
@@ -76,9 +76,7 @@ class App extends Component {
       data: ElectionContract.bytecode,
       arguments: [this.state.conname]
     }).send({
-      from: this.state.account,
-      gas: 1000248,
-      gasPrice: '20000000000'
+      from: this.state.account
     }).on('receipt', (receipt) => {
       console.log(receipt.contractAddress) // contains the new contract address
     }).then((newContractInstance) => {
@@ -112,13 +110,13 @@ class App extends Component {
 
   login(contload).then(res => {
       // if (!res.error) {
-      //     this.props.history.push(`/profile`)
+      //     this.props.history.push(`/status`)
       // } else {
       //     this.setState({ error: res.error })
       // }
       if (res) {
           console.log(res.address)
-          //this.props.history.push(`/profile`)
+          //this.props.history.push(`/status`)
           this.setState({conaddress:res.address})
       }
   })
@@ -187,9 +185,11 @@ class App extends Component {
 
   render() {
     return (
-      <div className="App">
+      <div className="container">
+      <div className="container">
+      <div className="jumbotron mt-5">
         <h1>Good to Go!</h1>
-        <Profile state={this.state} />
+        <Status state={this.state} />
         <input type="text" className="form-control" name="conname" placeholder="Enter election constituency" value={this.state.conname} onChange={this.onChangecon} />
         <button onClick={this.deployContract}>deploy</button>
         <button onClick={this.saveDb}>saveDB</button>
@@ -203,15 +203,12 @@ class App extends Component {
         <button onClick={this.loadCandidates}>loadCandidates</button>
         <button onClick={this.beginvote}>begin</button>
         <button onClick={this.endvote}>end</button>
-        <div className='row'>
-          <div className='col-lg-12 text-center' >
-            <ListCandidates candidates={this.state.candidates} />
-          </div>
-        </div>
+
+        <ListCandidates candidates={this.state.candidates} />
+
         <button onClick={this.loadCandidatesCount}>loadCandidatesCount</button> {this.state.candidateCount}
 
-        <div className="row">
-          <div className='col-md-6 mt-5 mx-auto' >
+
             <input type="text"
               className="form-control"
               name="candidatename"
@@ -220,8 +217,9 @@ class App extends Component {
               onChange={this.onChange}
             />
             <button onClick={this.addCandidate}>addcandidate</button>
-          </div>
-        </div>
+
+      </div>
+      </div>
       </div>
     );
   }
