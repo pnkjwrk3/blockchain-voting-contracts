@@ -8,7 +8,10 @@
     "react-dom": "^16.6.3",
     "react-scripts": "2.1.1",
     "truffle-contract": "^4.0.11",
-    "web3": "^1.0.0-beta.37"
+    "web3": "^1.0.0-beta.37",
+    "bootstrap": "^4.0.0",
+    "reactstrap": "^5.0.0-beta.2",
+    "style-loader": "^0.20.3"
   },
   "scripts": {
     "start": "set PORT=3010 && react-scripts start",
@@ -16,7 +19,6 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  
   "eslintConfig": {
     "extends": "react-app"
   },

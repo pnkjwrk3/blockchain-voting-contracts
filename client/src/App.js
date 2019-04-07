@@ -4,6 +4,7 @@ import ElectionContract from "./contracts/Election.json";
 import contract from "truffle-contract";
 import Web3 from 'web3'
 import ListCandidates from "./listcandidates.js";
+import Profile from "./Profile.js"
 import { register } from './ContractFunctions'
 import { login } from './ContractFunctions'
 
@@ -24,7 +25,9 @@ class App extends Component {
       candidatename: "",
       conaddress: undefined,
       conname: "",
-      candidateCount:0
+      candidateCount:0,
+      voteStart: false,
+      voteEnd: false
     };
 
     this.addCandidate = this.addCandidate.bind(this)
@@ -73,7 +76,7 @@ class App extends Component {
       data: ElectionContract.bytecode,
       arguments: [this.state.conname]
     }).send({
-      from: this.state.accounts[0],
+      from: this.state.account,
       gas: 1000248,
       gasPrice: '20000000000'
     }).on('receipt', (receipt) => {
@@ -103,7 +106,7 @@ class App extends Component {
   }
 
   loadDb=() => {
-    const contload = {
+  const contload = {
       name: this.state.conname
   }
 
@@ -136,6 +139,11 @@ class App extends Component {
     this.web3 = new Web3(this.web3Provider)
 
     this.MyContract = new this.web3.eth.Contract(ElectionContract.abi, this.state.conaddress);
+    
+    this.MyContract.methods.votingStarted().call().then((start)=>this.setState({voteStart:start}))
+    this.MyContract.methods.votingEnded().call().then((end)=>this.setState({voteEnd:end}))
+
+    alert(this.state.conname+" has been loaded")
   }
 
   loadCandidates = () => {
@@ -166,21 +174,22 @@ class App extends Component {
 
   addCandidate() {
     //cname = this.state.candidatename;
-    this.MyContract.methods.addCandidate(this.state.candidatename).send({ from: this.state.accounts[0] }).on('transactionHash', (hash) =>
+    this.MyContract.methods.addCandidate(this.state.candidatename).send({ from: this.state.account }).on('transactionHash', (hash) =>
       console.log(this.state.candidatename + hash)
     )
   }
 
   loadCandidatesCount = () => this.MyContract.methods.candidatesCount().call().then((count) => this.setState({candidateCount:count}));
 
-  beginvote = () => this.MyContract.methods.begin().send({ from: this.state.accounts[0] }).on('transactionHash', (hash) => console.log(hash))
+  beginvote = () => this.MyContract.methods.begin().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
 
-  endvote = () => this.MyContract.methods.end().send({ from: this.state.accounts[0] }).on('transactionHash', (hash) => console.log(hash))
+  endvote = () => this.MyContract.methods.end().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
 
   render() {
     return (
       <div className="App">
         <h1>Good to Go!</h1>
+        <Profile state={this.state} />
         <input type="text" className="form-control" name="conname" placeholder="Enter election constituency" value={this.state.conname} onChange={this.onChangecon} />
         <button onClick={this.deployContract}>deploy</button>
         <button onClick={this.saveDb}>saveDB</button>

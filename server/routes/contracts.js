@@ -33,7 +33,14 @@ contracts.post('/register', (req, res) => {
                         res.send('error: ' + err)
                     })
             } else {
-                res.json({ error: "User already exists" })
+                // res.json({ error: "User already exists" })
+                Contract.update(conData, {where:{id:user.id}})
+                    .then(user => {
+                        res.json({ status: user.address + ' registered' })
+                    })
+                    .catch(err => {
+                        res.send('error: ' + err)
+                    })
             }
         })
         .catch(err => {
