@@ -117,7 +117,7 @@ class App extends Component {
         this.setState({ conaddress: res.address })
       }
     })
-    console.log("from localstorage " + JSON.parse(localStorage.getItem('coninst')).address)
+    //console.log("from localstorage " + JSON.parse(localStorage.getItem('coninst')).address)
     //this.setState({conaddress:localStorage.coninst['address']})
     //console.log(this.state.conaddress)
   }
