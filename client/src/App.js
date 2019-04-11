@@ -103,7 +103,7 @@ class App extends Component {
 
     this.setState({MyContract})
 
-    alert(this.state.conname + " has been loaded")
+    //alert(this.state.conname + " has been loaded")
   }
 
   loadCandidates = () => {
