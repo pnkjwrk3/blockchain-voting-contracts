@@ -1,14 +1,11 @@
 import React, { Component } from "react";
 import ElectionContract from "./contracts/Election.json";
-// import getWeb3 from "./utils/getWeb3";
-import Web3 from 'web3'
-//import ListCandidates from "./listcandidates.js";
+import getWeb3 from "./utils/getWeb3";
 import TestListCandidates from "./testlist.js"
 import Status from "./status.js"
 import { register } from './ContractFunctions'
 import { login } from './ContractFunctions'
 
-// import "./App.css";
 
 class App extends Component {
 
@@ -18,18 +15,16 @@ class App extends Component {
     this.state = {
       candidates: [],
       web3: null, accounts: null,
-      argname: "",
       account: "0x0",
       newContractInstance: null,
-      //networkId: ""
       candidatename: "",
       conaddress: undefined,
       conname: "",
-      candidateCount: 0,
       voteStart: false,
       voteEnd: false,
       loadStatus: false,
-      loadcand: false
+      loadcand: false,
+      MyContract: null
     };
 
     this.addCandidate = this.addCandidate.bind(this);
@@ -40,28 +35,17 @@ class App extends Component {
   componentDidMount = async () => {
     try {
       // Get network provider and web3 instance.      
-      if (typeof window.web3 !== 'undefined') {
-        this.web3Provider = window.web3.currentProvider
-      } else {
-        this.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545')
-      }
-
-      this.web3 = new Web3(this.web3Provider)
-      //console.log(this.web3);
+      const web3 = await getWeb3();
 
       // Use web3 to get the user's accounts.
-      const accounts = await this.web3.eth.getAccounts(); console.log(accounts[0]);
-      this.web3.eth.getCoinbase((err, account) => {
-        this.setState({ account })
-      });
+      const account = await web3.eth.getCoinbase(); console.log("accounts 1 "+account);
 
       // Get the contract instance.
 
       //from Dashboard.js
-      this.MyContract = new this.web3.eth.Contract(ElectionContract.abi, this.state.conaddress);
-      //this.MyContract.setProvider(this.web3Provider);
+      const MyContract = new web3.eth.Contract(ElectionContract.abi, this.state.conaddress);
 
-      this.setState({ web3: this.web3, accounts });
+      this.setState({ web3, account, MyContract });
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -72,20 +56,21 @@ class App extends Component {
   };
 
   deployContract = () => {
-    // this.MyContract.new({data:this.MyContract.bytecode,from:this.state.account, gas: 6721975}).then(()=>console.log(this.MyContract.address)
+
     console.log(this.state.account);
-    this.MyContract.deploy({
+    this.state.MyContract.deploy({
       data: ElectionContract.bytecode,
       arguments: [this.state.conname]
     }).send({
       from: this.state.account
     }).on('receipt', (receipt) => {
       console.log(receipt.contractAddress) // contains the new contract address
-    }).then((newContractInstance) => {
-      console.log(newContractInstance.options.address) // instance with the new contract address
-      this.setState({ conaddress: newContractInstance.options.address })
-      this.setState({ newContractInstance })
+    }).then((MyContract) => {
+      console.log(MyContract.options.address) // instance with the new contract address
+      this.setState({ MyContract, conaddress: MyContract.options.address })
+      this.saveDb();
     });
+    
   }
 
   saveDb = () => {
@@ -95,58 +80,36 @@ class App extends Component {
     }
 
     register(cont).then(res => {
-      // if (!res.error) {
-      //     this.props.history.push(`/login`)
-      // } else {
-      //     console.log(res.json().error)
-      //     this.setState({ error: res.json().error })
-      // }
       console.log("saved")
     })
   }
 
-  loadDb = () => {
-    // localStorage.removeItem('coninst')
+  loadContract = async () => {
     const contload = {
       name: this.state.conname
     }
 
-    login(contload).then(res => {
+    await login(contload).then(res => {
       if (res) {
         console.log(res.address)
         this.setState({ conaddress: res.address })
       }
     })
-    console.log("from localstorage " + JSON.parse(localStorage.getItem('coninst')).address)
-    //this.setState({conaddress:localStorage.coninst['address']})
-    //console.log(this.state.conaddress)
-  }
 
-  loadContract = () => {
-    //this.loadDb();
-    console.log(this.state.conaddress);
-    if (typeof window.web3 !== 'undefined') {
-      this.web3Provider = window.web3.currentProvider
-    } else {
-      this.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545')
-    }
+    const MyContract = new this.state.web3.eth.Contract(ElectionContract.abi, this.state.conaddress);
 
-    this.web3 = new Web3(this.web3Provider)
+    MyContract.methods.votingStarted().call().then((start) => this.setState({ voteStart: start }))
+    MyContract.methods.votingEnded().call().then((end) => this.setState({ voteEnd: end }))
 
-    this.MyContract = new this.web3.eth.Contract(ElectionContract.abi, this.state.conaddress);
-
-    this.MyContract.methods.votingStarted().call().then((start) => this.setState({ voteStart: start }))
-    this.MyContract.methods.votingEnded().call().then((end) => this.setState({ voteEnd: end }))
-
-    //this.setState({newContractInstance:this.MyContract})
+    this.setState({MyContract})
 
     alert(this.state.conname + " has been loaded")
   }
 
   loadCandidates = () => {
-    this.MyContract.methods.candidatesCount().call().then((candidatesCount) => {
+    this.state.MyContract.methods.candidatesCount().call().then((candidatesCount) => {
       for (var i = 1; i <= candidatesCount; i++) {
-        this.MyContract.methods.candidates(i).call().then((candidate) => {
+        this.state.MyContract.methods.candidates(i).call().then((candidate) => {
           const candidates = [...this.state.candidates]
           candidates.push({
             id: candidate[0],
@@ -160,10 +123,6 @@ class App extends Component {
     this.setState({ loadStatus: true })
   }
 
-  contractAddress = () => {
-    console.log(this.MyContract.options.address);
-    //this.setState({conaddress:this.MyContract.options.address});
-  }
 
   onChange = (e) => this.setState({ candidatename: e.target.value })
   onChangecon = (e) => this.setState({ conname: e.target.value })
@@ -171,68 +130,51 @@ class App extends Component {
 
 
   addCandidate() {
-    //cname = this.state.candidatename;
-    this.MyContract.methods.addCandidate(this.state.candidatename).send({ from: this.state.account }).on('transactionHash', (hash) =>
+    this.state.MyContract.methods.addCandidate(this.state.candidatename).send({ from: this.state.account }).on('transactionHash', (hash) =>
       console.log(this.state.candidatename + hash)
     )
   }
 
-  loadCandidatesCount = () => this.MyContract.methods.candidatesCount().call().then((count) => this.setState({ candidateCount: count }));
 
-  beginvote = () => this.MyContract.methods.begin().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
+  beginvote = () => this.state.MyContract.methods.begin().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
 
-  endvote = () => this.MyContract.methods.end().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
+  endvote = () => this.state.MyContract.methods.end().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
 
-emptylocal(){
-  localStorage.removeItem('coninst')
-}
+  emptylocal() {
+    localStorage.removeItem('coninst')
+  }
 
   render() {
     return (
       <div className="container">
+        <h1>Good to Go!</h1>
 
-            <h1>Good to Go!</h1>
-            <h2 onClick={() => this.setState({ loadStatus: !this.state.loadStatus })}>Status</h2>
-            {this.state.loadStatus ? <Status state={this.state} conadd={this.state.conaddress} /> : null}
+        <h2 onClick={() => this.setState({ loadStatus: !this.state.loadStatus })}>Status</h2>
+        {this.state.loadStatus ? <Status state={this.state} /> : null}
 
-            <input type="text" className="form-control" name="conname" placeholder="Enter election constituency" value={this.state.conname} onChange={this.onChangecon} />
-            <button onClick={this.deployContract} style={{marginLeft:'15px'}}>deploy</button>
-            <button onClick={this.saveDb} style={{marginLeft:'15px'}}>saveDB</button>
-            <br></br>
-            <input type="text" className="form-control" name="conname1" placeholder="Enter name constituency" value={this.state.conname} onChange={this.onChangecona} />
-            <button onClick={this.loadDb} style={{marginLeft:'15px'}}>loadDb</button>
-            <button onClick={this.loadContract} style={{marginLeft:'12px'}}>loadContract</button>
+        <b>Contract Address: </b> {this.state.conaddress}
+        <br />
 
-            <br/>
-            <br/>
-            <button onClick={this.contractAddress}  style={{marginLeft:'15px'}}>CurrentAddress</button>{this.state.conaddress}
-            <br></br>
+        <input type="text" className="form-control" name="conname" placeholder="Enter election constituency" value={this.state.conname} onChange={this.onChangecon} />
+        <button onClick={this.deployContract} style={{ marginLeft: '15px' }}>deployContract</button>
+        <br></br>
 
+        <input type="text" className="form-control" name="conname1" placeholder="Enter name constituency" value={this.state.conname} onChange={this.onChangecona} />
+        <button onClick={this.loadContract} style={{ marginLeft: '12px' }}>loadContract</button>
+        <br></br>
 
-            <button onClick={this.beginvote} style={{margin:'15px'}}>begin</button>
-            <button onClick={this.endvote} style={{margin:'15px'}}>end</button>
+        <button onClick={this.beginvote} style={{ margin: '15px' }}>begin</button>
+        <button onClick={this.endvote} style={{ margin: '15px' }}>end</button>
+        <br />
 
-            {/* <ListCandidates candidates={this.state.candidates} /> */}
+        <input type="text" className="form-control" name="candidatename" placeholder="Enter candidate Name" value={this.state.candidatename} onChange={this.onChange} />
+        <button onClick={this.addCandidate} style={{ margin: '15px' }}>addcandidate</button>
+        <br />
 
-<br />
-            <button onClick={this.loadCandidatesCount} style={{marginLeft:'15px'}}>loadCandidatesCount</button> {this.state.candidateCount}
-
-            <br />
-            <input type="text"
-              className="form-control"
-              name="candidatename"
-              placeholder="Enter candidate Name"
-              value={this.state.candidatename}
-              onChange={this.onChange}
-            />
-            <button onClick={this.addCandidate} style={{margin:'15px'}}>addcandidate</button>
-            <br />
-
-            <h2 onClick={() => this.setState({ loadcand: !this.state.loadcand })}>Candidates</h2>
-            <div style={{margin:'15px'}}>
-            {this.state.loadcand ? <TestListCandidates conadd={this.state.conaddress} /> : null}
-            </div>
-
+        <h2 onClick={() => this.setState({ loadcand: !this.state.loadcand })}>Candidates</h2>
+        <div style={{ margin: '15px' }}>
+          {this.state.loadcand ? <TestListCandidates state={this.state} /> : null}
+        </div>
       </div>
     );
   }
