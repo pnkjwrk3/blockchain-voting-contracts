@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import ElectionContract from "./contracts/Election.json";
+//import ConstituencyContract from "./contracts/Constituency.json"
 import getWeb3 from "./utils/getWeb3";
 import TestListCandidates from "./testlist.js"
+import StoreContract from "./storecontract.js"
 import Status from "./status.js"
 import { register } from './ContractFunctions'
 import { login } from './ContractFunctions'
@@ -24,6 +26,7 @@ class App extends Component {
       voteEnd: false,
       loadStatus: false,
       loadcand: false,
+      loadsmart: false,
       MyContract: null
     };
 
@@ -38,7 +41,7 @@ class App extends Component {
       const web3 = await getWeb3();
 
       // Use web3 to get the user's accounts.
-      const account = await web3.eth.getCoinbase(); console.log("accounts 1 "+account);
+      const account = await web3.eth.getCoinbase(); console.log("accounts 1 " + account);
 
       // Get the contract instance.
 
@@ -56,7 +59,6 @@ class App extends Component {
   };
 
   deployContract = () => {
-
     console.log(this.state.account);
     this.state.MyContract.deploy({
       data: ElectionContract.bytecode,
@@ -70,7 +72,6 @@ class App extends Component {
       this.setState({ MyContract, conaddress: MyContract.options.address })
       this.saveDb();
     });
-    
   }
 
   saveDb = () => {
@@ -78,7 +79,6 @@ class App extends Component {
       name: this.state.conname,
       address: this.state.conaddress
     }
-
     register(cont).then(res => {
       console.log("saved")
     })
@@ -88,41 +88,17 @@ class App extends Component {
     const contload = {
       name: this.state.conname
     }
-
     await login(contload).then(res => {
       if (res) {
         console.log(res.address)
         this.setState({ conaddress: res.address })
       }
     })
-
     const MyContract = new this.state.web3.eth.Contract(ElectionContract.abi, this.state.conaddress);
-
     MyContract.methods.votingStarted().call().then((start) => this.setState({ voteStart: start }))
     MyContract.methods.votingEnded().call().then((end) => this.setState({ voteEnd: end }))
-
-    this.setState({MyContract})
-
-    //alert(this.state.conname + " has been loaded")
+    this.setState({ MyContract })
   }
-
-  loadCandidates = () => {
-    this.state.MyContract.methods.candidatesCount().call().then((candidatesCount) => {
-      for (var i = 1; i <= candidatesCount; i++) {
-        this.state.MyContract.methods.candidates(i).call().then((candidate) => {
-          const candidates = [...this.state.candidates]
-          candidates.push({
-            id: candidate[0],
-            name: candidate[1],
-            voteCount: candidate[2]
-          });
-          this.setState({ candidates: candidates })
-        });
-      }
-    })
-    this.setState({ loadStatus: true })
-  }
-
 
   onChange = (e) => this.setState({ candidatename: e.target.value })
   onChangecon = (e) => this.setState({ conname: e.target.value })
@@ -134,7 +110,6 @@ class App extends Component {
       console.log(this.state.candidatename + hash)
     )
   }
-
 
   beginvote = () => this.state.MyContract.methods.begin().send({ from: this.state.account }).on('transactionHash', (hash) => console.log(hash))
 
@@ -160,7 +135,7 @@ class App extends Component {
         <br></br>
 
         <input type="text" className="form-control" name="conname1" placeholder="Enter name constituency" value={this.state.conname} onChange={this.onChangecona} />
-        <button onClick={this.loadContract} style={{ marginLeft: '12px' }}>loadContract</button>
+        <button onClick={this.loadContract} style={{ marginLeft: '15px', paddingRight: '20px' }}>loadContract</button>
         <br></br>
 
         <button onClick={this.beginvote} style={{ margin: '15px' }}>begin</button>
@@ -175,6 +150,11 @@ class App extends Component {
         <div style={{ margin: '15px' }}>
           {this.state.loadcand ? <TestListCandidates state={this.state} /> : null}
         </div>
+
+        {/* <h2 onClick={() => this.setState({ loadsmart: !this.state.loadsmart })}>Store on contract</h2>
+        <div style={{ margin: '15px' }}>
+          {this.state.loadsmart ? <StoreContract state={this.state} /> : null}
+        </div> */}
       </div>
     );
   }

@@ -1,5 +1,5 @@
-var dynElection = artifacts.require("./Election.sol");
+var constitunc = artifacts.require("./Constituency.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(dynElection);
+  deployer.deploy(constitunc);
 };
