@@ -18,8 +18,6 @@ export const login = user => {
             name: user.name
         })
         .then(res => {
-            //localStorage.setItem('coninst', JSON.stringify(res.data))
-            //console.log(res.data)
             return res.data
         })
         .catch(err => {
