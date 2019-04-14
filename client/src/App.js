@@ -150,18 +150,11 @@ class App extends Component {
         <div style={{ margin: '15px' }}>
           {this.state.loadcand ? <TestListCandidates state={this.state} /> : null}
         </div>
-<<<<<<< HEAD
-        {/* <h2 onClick={() => this.setState({ loadcand: !this.state.loadcand })}>Candidates</h2>    For authenticating valid candidates
-        <div style={{ margin: '15px' }}>
-          {this.state.loadcand ? <TestListCandidates state={this.state} /> : null}
-          </div> */}
-=======
 
         {/* <h2 onClick={() => this.setState({ loadsmart: !this.state.loadsmart })}>Store on contract</h2>
         <div style={{ margin: '15px' }}>
           {this.state.loadsmart ? <StoreContract state={this.state} /> : null}
         </div> */}
->>>>>>> 55f0600584fd69b682c730d3864a8a46a49014e6
       </div>
     );
   }
