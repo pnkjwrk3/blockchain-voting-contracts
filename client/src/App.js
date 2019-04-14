@@ -175,6 +175,10 @@ class App extends Component {
         <div style={{ margin: '15px' }}>
           {this.state.loadcand ? <TestListCandidates state={this.state} /> : null}
         </div>
+        {/* <h2 onClick={() => this.setState({ loadcand: !this.state.loadcand })}>Candidates</h2>    For authenticating valid candidates
+        <div style={{ margin: '15px' }}>
+          {this.state.loadcand ? <TestListCandidates state={this.state} /> : null}
+          </div> */}
       </div>
     );
   }
